@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llavero AR Experience</title>
+    <!-- Incluimos A-Frame y MindAR -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; }
+        
+        /* Interfaz de usuario para instrucciones */
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        .scan-text {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: sans-serif;
+            font-weight: bold;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+
+        /* Botón oculto que aparece al detectar */
+        #action-btn {
+            pointer-events: auto;
+            background: #00e676; /* Color verde similar al llavero */
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,230,118, 0.4);
+            display: none; /* Oculto por defecto */
+            margin-bottom: 20px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Capa de UI -->
+    <div id="ui-layer">
+        <div id="scan-instruction" class="scan-text">Cargando cámara...</div>
+        <a id="action-btn" href="https://github.com" target="_blank">Ver Proyecto 🔗</a>
+    </div>
+
+    <!-- Escena AR
+         IMPORTANTE: 
+         He puesto una URL de ejemplo en 'imageTargetSrc' para que no de error aquí.
+         Cuando tengas tu archivo 'targets.mind', cambia la URL a: ./targets.mind
+    -->
+    <a-scene 
+        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; filterMinCF:0.0001; filterBeta: 0.001;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
+
+        <a-assets>
+            <img id="card-img" src="https://cdn.glitch.global/bb6d4a5c-54aa-49c7-926f-474c42497672/card-placeholder.png?v=1686646736287" />
+        </a-assets>
+
+        <!-- Cámara AR -->
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <!-- Entidad del objetivo -->
+        <a-entity mindar-image-target="targetIndex: 0" id="target-entity">
+            
+            <!-- Panel trasero oscuro -->
+            <a-plane color="#000" opacity="0.8" height="0.6" width="1" position="0 0 0"></a-plane>
+            
+            <!-- Texto de Bienvenida -->
+            <a-text value="RC Q Design" color="#00e676" align="center" position="0 0.15 0.01" width="2"></a-text>
+            
+            <!-- Texto secundario -->
+            <a-text value="Realidad Aumentada Activa" color="#FFF" align="center" position="0 0 0.01" width="1.5"></a-text>
+
+            <!-- Cubos animados -->
+            <a-box color="#00e676" position="0.4 -0.2 0.1" scale="0.1 0.1 0.1" animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"></a-box>
+            <a-box color="#FFF" position="-0.4 -0.2 0.1" scale="0.1 0.1 0.1" animation="property: rotation; to: 0 -360 0; loop: true; dur: 3000"></a-box>
+
+        </a-entity>
+    </a-scene>
+
+    <script>
+        const sceneEl = document.querySelector('a-scene');
+        const target = document.querySelector('#target-entity');
+        const instructionText = document.querySelector('#scan-instruction');
+        const actionBtn = document.querySelector('#action-btn');
+
+        // Evento cuando la escena AR está lista
+        sceneEl.addEventListener("arReady", (event) => {
+            console.log("MindAR está listo");
+            instructionText.innerText = "Apunta al objetivo (Demo o Llavero)";
+        });
+
+        // Evento si falla la carga (útil para depurar)
+        sceneEl.addEventListener("arError", (event) => {
+            console.log("Error AR:", event);
+            instructionText.innerText = "Error al cargar archivo .mind";
+        });
+
+        target.addEventListener("targetFound", event => {
+            console.log("Objetivo encontrado");
+            instructionText.style.opacity = "0"; 
+            actionBtn.style.display = "block";   
+        });
+
+        target.addEventListener("targetLost", event => {
+            console.log("Objetivo perdido");
+            instructionText.style.opacity = "1"; 
+            actionBtn.style.display = "none";    
+        });
+    </script>
+</body>
+</html>
